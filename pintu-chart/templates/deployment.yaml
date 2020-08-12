@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-trivia-deployment
+spec:
+  replicas: {{ .Values.trivia.replica }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-trivia-backend
+        image: {{ .Values.trivia.backend.image }}:{{ .Values.trivia.backend.tag }}
+        imagePullPolicy: {{ .Values.trivia.pullPolicy }}
+        env:
+          - name: BACKEND_PORT
+            value: {{ .Values.trivia.env.BACKEND_PORT | quote }}				
+      - name: {{ .Chart.Name }}-trivia-frontend
+        image: {{ .Values.trivia.frontend.image }}:{{ .Values.trivia.frontend.tag }}
+        imagePullPolicy: {{ .Values.trivia.pullPolicy }}
+        ports:
+          - name: http
+            containerPort: {{ .Values.trivia.env.FRONTEND_PORT }}
+            protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: {{ .Values.trivia.env.FRONTEND_PORT }}
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.trivia.env.FRONTEND_PORT }}
+        env:
+          - name: BACKEND_URI
+            value: "localhost:{{.Values.trivia.env.BACKEND_PORT}}"
+          - name: FRONTEND_PORT
+            value: {{ .Values.trivia.env.FRONTEND_PORT | quote }}
